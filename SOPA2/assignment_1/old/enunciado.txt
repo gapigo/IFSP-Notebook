@@ -1,0 +1,14 @@
+Arquivos: Atividade 1
+
+Objetivo: Faça um programa no Linux que faça uso de uma chamada de sistema POSIX
+
+1 - Escolha uma dupla
+2 - Acesse o POSIX: https://pubs.opengroup.org/onlinepubs/9699919799/ (link na Semana4)
+3 - Escolha duas operações (syscall) de arquivo, diretório e/ou recurso de gerenciamento do SO (Exemplo: mkdir, rmdir, cp, mv, rm, etc.) cada uma respectivamente executando em uma thread.
+4 - Crie o seu próprio programa em C utilizando essa chamada de sistema (você pode consultar o código fonte do programa original do Linux, para ser de "inspiração")
+	nano prog1.c
+5 - Compile e execute/teste o programa
+	gcc prog1.c -o prog1.bin
+	./prog1.bin
+6 - Coloque o nome da dupla em um comentario no inicio do arquivo fonte em C
+7 - Anexe o arquivo e envie pelo moodle na respectiva tarefa.
