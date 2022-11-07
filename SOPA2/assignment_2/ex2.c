@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #define N_FILOSOFOS 5
 #define PMI PTHREAD_MUTEX_INITIALIZER
+#define TRUE 1
+#define FALSE 0
 
 typedef struct {
   int hashi_esquerda;
@@ -11,7 +14,10 @@ typedef struct {
   int id_relativo;
 } filosofo;
 
-pthread_mutex_t hashis[] = {PMI, PMI, PMI, PMI, PMI};
+//pthread_mutex_t hashis[] = {PMI, PMI, PMI, PMI, PMI};
+sem_t hashis[N_FILOSOFOS];
+int pratos[N_FILOSOFOS];
+
 char nomes[][32] = {"Aristóteles", "Platão", "Sócrates", "Pitágoras", "Demócrito"};
 
 int randint(int smallest, int biggest) {
@@ -19,45 +25,48 @@ int randint(int smallest, int biggest) {
   return rand() % (biggest-smallest) + smallest;
 }
 
-void *thread_filosofo(void *args){
-  filosofo *actual_args = args;
-  printf("%s -> id %d ", nomes[(int)actual_args->id_relativo], pthread_self());
-  pthread_mutex_lock(&hashis[0]);
-  printf("%d %d\n", hashis[0], randint(5, 16));
-  pthread_mutex_unlock(&hashis[0]);
-  //printf("%d ", actual_args->hashi_esquerda);
-  //printf("%d ", actual_args->hashi_direita);
-  //printf("%d\n", actual_args->id_relativo);
-
+void comer(char nome[]) {
+  printf("%s está comendo.\n", nome);
+  sleep(randint(1, 5));
+  printf("%s acabou de comer\n", nome);
 }
 
+void mostrar_pratos(int arr[]){
+  printf("Pratos: [");
+  for (int i=0; i < N_FILOSOFOS; i++)  printf("%d%s", arr[i], i+1 == N_FILOSOFOS ? "]\n" : ", ");
+}
 
-//pthread_mutex_t hashis[N_FILOSOFOS];
-
+void *thread_filosofo(void *args){
+  filosofo *actual_args = args;
+  int id = (int) actual_args -> id_relativo;
+  printf("%s -> id %d sentou-se à mesa\n", nomes[id], pthread_self());
+  while(TRUE) {
+    sleep(randint(1, 5));
+    sem_wait(&hashis[actual_args->hashi_esquerda]);
+    sem_wait(&hashis[actual_args->hashi_direita]);
+    comer(nomes[id]);
+    pratos[id]++; mostrar_pratos(pratos);
+    sem_post(&hashis[actual_args->hashi_esquerda]);
+    sem_post(&hashis[actual_args->hashi_direita]);
+  }
+  //pthread_mutex_lock(&hashis[0]);
+  //printf("%d %d\n", hashis[0], randint(5, 16));
+  //pthread_mutex_unlock(&hashis[0]);
+}
 
 int main() {
-  //for (int i=0; i<N_FILOSOFOS; i++) {hashis[i] = PTHREAD_MUTEX_INITIALIZER;}
   time_t t;
   srand((unsigned) time(&t));
   
-  for (int i=0; i<N_FILOSOFOS; i++) printf("%d, ", hashis[i]);
-  pthread_mutex_t *ptr = hashis;
-  /*printf("%s", nomes[2]);
-  printf("%d\n", ptr);
-  printf("%d\n", &hashis[1]);
-  printf("%d\n", &hashis[2]);
-  printf("%d\n", &hashis[3]);
-  printf("%d\n", &hashis[4]);*/
+  //for (int i=0; i<N_FILOSOFOS; i++) printf("%d, ", hashis[i]);
+  for (int i=0; i<N_FILOSOFOS; i++) pratos[i] = 0;
+  for(int i=0; i<N_FILOSOFOS; i++) sem_init(&hashis[i],0,1);
+  //pthread_mutex_t *ptr = hashis;
+
   int hashi_esquerda, hashi_direita, id_relativo;
   pthread_t filosofos[N_FILOSOFOS];
   for (int i=0; i<N_FILOSOFOS; i++) {
     filosofo *args = malloc(sizeof *args);
-    /*hashi_esquerda = i%5;
-    hashi_direita = (i+1)%5;
-    id_relativo = i;*/
-    /*args->hashi_esquerda = (int) hashi_esquerda;
-    args->hashi_direita = (int) hashi_direita;
-    args->id_relativo = (int) id_relativo;*/
     
     args->hashi_esquerda = i%N_FILOSOFOS;
     args->hashi_direita = (i+1)%N_FILOSOFOS;
